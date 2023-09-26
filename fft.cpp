@@ -1,41 +1,22 @@
-#define _USE_MATH_DEFINES
-#include<iostream>
-#include<complex>
-#include<cmath>
-using namespace std;
-void fft(complex<float>* coefficients, unsigned long long int n, unsigned long long int factor, complex<float>* xk, unsigned long long int* coeff_indices, complex<float>* out);
-int main() {
-	unsigned long long int n, i; // NUMBER OF COEFFICIENTS, MUST BE AN INTEGER 2^n
-	float real;
-	float im;
-	cin >> n;
-	unsigned long long indices[n];
-	complex<float> coefficients[n];
-	complex<float> xk[n];
-	complex<float> out[n] = {0.0f + 0if};
+#include"fft.h"
+void fft(std::complex<float>* coefficients, unsigned long long int n, std::complex<float>* out) {
+	std::complex<float> xk[n];
+	unsigned long long indices[n], i;
 	float x, y;
 	float theta;
 	// proceso para generar los xk.
 	for(theta = 0.0f, i = 0; theta < 2*M_PI; theta+= 2*M_PI/n, i++) {
 		x = cosf(theta);
 		y = sinf(theta);
-		xk[i] = x + 1if*y;
+		xk[i].real(x);
+		xk[i].imag(y);
 	}
 	for(i = 0; i < n; i++) {
-		cin >> real;
-		cin >> im;
-		coefficients[i] = real + 1if*im;
 		indices[i] = i;
 	}
-	fft(coefficients, n, 1, xk, indices, out);
-	cout << "[";
-	for(i = 0; i < n; i++) {
-		cout << abs(out[i]) << ", ";
-	}
-	cout << "]";
-	return 0;
+	fft_r(coefficients, n, 1, xk, indices, out);
 }
-void fft(complex<float>* coefficients, unsigned long long int n, unsigned long long int factor, complex<float>* xk, unsigned long long int* coeff_indices, complex<float>* out) {
+void fft_r(std::complex<float>* coefficients, unsigned long long int n, unsigned long long int factor, std::complex<float>* xk, unsigned long long int* coeff_indices, std::complex<float>* out) {
 	unsigned long long int i, j, k, n_i = n/factor; // numero de elementos en el conjunto actual
 	if(n_i == 1) {
 		i = coeff_indices[0];
@@ -49,9 +30,9 @@ void fft(complex<float>* coefficients, unsigned long long int n, unsigned long l
 		coeff_pares[i/2] = coeff_indices[i];
 		coeff_impares[i/2] = coeff_indices[i + 1];
 	}
-	complex<float> last_out[n] = {0.0f + 0if};
-	fft(coefficients, n, factor*2, xk, coeff_pares, last_out);
-	fft(coefficients, n, factor*2, xk, coeff_impares, last_out);
+	std::complex<float> last_out[n] = {0.0f + 1j*0.0f};
+	fft_r(coefficients, n, factor*2, xk, coeff_pares, last_out);
+	fft_r(coefficients, n, factor*2, xk, coeff_impares, last_out);
 	unsigned long long int par, impar;
 	// para todos los xk evaluar
 	for(k = 0, i = 0; k < n; k += factor, i++) {
