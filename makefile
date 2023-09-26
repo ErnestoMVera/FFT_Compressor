@@ -1,11 +1,13 @@
 CXX=g++
 CXXFLAGS=-Wall -g
+DIR=./src
+OBJ=main.o fft.o
 all: fft.exe
-fft.exe: main.o fft.o
+fft.exe: $(OBJ)
 	$(CXX) -o fft fft.o main.o
-main.o: main.cpp
-	$(CXX) $(CXXFLAGS) -c main.cpp
-fft.o: fft.cpp
-	$(CXX) $(CXXFLAGS) -c fft.cpp
+main.o: $(DIR)/main.cpp
+	$(CXX) $(CXXFLAGS) -c $(DIR)/main.cpp
+fft.o: $(DIR)/fft.cpp
+	$(CXX) $(CXXFLAGS) -c $(DIR)/fft.cpp
 clean:
 	rm -rf *.o *.exe
