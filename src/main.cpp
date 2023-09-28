@@ -18,9 +18,10 @@ int main() {
 	}
 	fft(coefficients, n, out);
 	cout << "[";
-	for(i = 0; i < n; i++) {
+	for(i = 0; i < n - 1; i++) {
 		cout << abs(out[i]) << ", ";
 	}
+	cout << abs(out[n - 1]);
 	cout << "]";
 	return 0;
 }

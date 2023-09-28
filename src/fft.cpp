@@ -1,4 +1,5 @@
 #include"fft.h"
+#include<iostream>
 void fft(std::complex<float>* coefficients, unsigned long long int n, std::complex<float>* out) {
 	std::complex<float> xk[n];
 	unsigned long long indices[n], i;
@@ -20,7 +21,7 @@ void fft_r(std::complex<float>* coefficients, unsigned long long int n, unsigned
 	unsigned long long int i, j, k, n_i = n/factor; // numero de elementos en el conjunto actual
 	if(n_i == 1) {
 		i = coeff_indices[0];
-		out[i] = coefficients[i];
+		out[0] = coefficients[i];
 		return;
 	}
 	unsigned long long int coeff_pares[n_i/2];
@@ -30,16 +31,14 @@ void fft_r(std::complex<float>* coefficients, unsigned long long int n, unsigned
 		coeff_pares[i/2] = coeff_indices[i];
 		coeff_impares[i/2] = coeff_indices[i + 1];
 	}
-	std::complex<float> last_out[n] = {0.0f + 1j*0.0f};
-	fft_r(coefficients, n, factor*2, xk, coeff_pares, last_out);
-	fft_r(coefficients, n, factor*2, xk, coeff_impares, last_out);
-	unsigned long long int par, impar;
+	std::complex<float> out_par[n_i/2] = {0.0f + 1j*0.0f};
+	std::complex<float> out_impar[n_i/2] = {0.0f + 1j*0.0f};
+	fft_r(coefficients, n, factor*2, xk, coeff_pares, out_par);
+	fft_r(coefficients, n, factor*2, xk, coeff_impares, out_impar);
 	// para todos los xk evaluar
-	for(k = 0, i = 0; k < n; k += factor, i++) {
-		j = coeff_indices[i];
-		par = coeff_pares[i % (n_i/2)];
-		impar = coeff_impares[i % (n_i/2)];
-		out[j] = last_out[par] + xk[k]*last_out[impar];
+	for(k = 0, j = 0; k < n_i; k++, j += factor) {
+		i = k % (n_i/2);
+		out[k] = out_par[i] + xk[j]*out_impar[i];
 	}
 	return;
 }
