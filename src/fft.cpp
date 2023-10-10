@@ -17,6 +17,24 @@ void fft(std::complex<float>* coefficients, unsigned long long int n, std::compl
 	}
 	fft_r(coefficients, n, 1, xk, indices, out);
 }
+void ifft(std::complex<float>* coefficients, unsigned long long int n, std::complex<float>* out) {
+	std::complex<float> xk[n];
+	unsigned long long indices[n], i;
+	float x, y;
+	float theta;
+	// proceso para generar los xk.
+	for(theta = 0.0f, i = 0; theta < 2*M_PI; theta+= 2*M_PI/n, i++) {
+		x = cosf(theta);
+		y = -sinf(theta);
+		xk[i].real(x);
+		xk[i].imag(y);
+		coefficients[i] /= n; // Escalar los coefficientes por el numero de muestras para corregir el error en magnitud generado por la FFT
+	}
+	for(i = 0; i < n; i++) {
+		indices[i] = i;
+	}
+	fft_r(coefficients, n, 1, xk, indices, out);
+}
 void fft_r(std::complex<float>* coefficients, unsigned long long int n, unsigned long long int factor, std::complex<float>* xk, unsigned long long int* coeff_indices, std::complex<float>* out) {
 	unsigned long long int i, j, k, n_i = n/factor; // numero de elementos en el conjunto actual
 	if(n_i == 1) {
