@@ -1,5 +1,4 @@
 #include"fft.h"
-#include<iostream>
 void fft(std::complex<float>* coefficients, unsigned long long int n, std::complex<float>* out) {
 	std::complex<float> xk[n];
 	unsigned long long indices[n], i;
