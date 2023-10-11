@@ -5,7 +5,7 @@
 #
 # Distributed under terms of the MIT license.
 #
-../fft.exe < test_input3.txt > out.txt
+../fft.exe -f < test_input3.txt > out.txt
 OUTPUT=$(diff -s out.txt gold_std1.txt)
 EXPECTED="Files out.txt and gold_std1.txt are identical"
 if [ "$OUTPUT" = "$EXPECTED" ]; then

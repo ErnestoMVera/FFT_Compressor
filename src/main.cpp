@@ -5,20 +5,29 @@
 #include<unistd.h>
 #include"fft.h"
 using namespace std;
+void forward_or_inverse_fft(short int forward_inverse_flag);
 int main(int argc, char** argv) {
 	short int forward_inverse_flag = 0; // Flag to check whether were doing FFT or IFFT
 	int c;
-	while((c = getopt(argc, argv, "fi")) != -1) {
+	while((c = getopt(argc, argv, "ficd")) != -1) {
 		switch(c) {
-			case 'f':
+			case 'f': // Forward one dimensional FFT 
 				forward_inverse_flag = 0;
+				forward_or_inverse_fft(forward_inverse_flag);
 				break;
-			case 'i':
+			case 'i': // Inverse one dimensional FFT
 				forward_inverse_flag = 1;
+				forward_or_inverse_fft(forward_inverse_flag);
+				break;
+			case 'c': // Compression two dimensional FFT
+			case 'd': // Decompression two dimensional FFT
 			default:
 				break;
 		}
 	}
+	return 0;
+}
+void forward_or_inverse_fft(short int forward_inverse_flag) {
 	unsigned long long int n, i; // NUMBER OF COEFFICIENTS, MUST BE AN INTEGER 2^n
 	float real;
 	float im;
@@ -45,5 +54,5 @@ int main(int argc, char** argv) {
 	}
 	cout << abs(out[n - 1]);
 	cout << "]";
-	return 0;
+	return;
 }
