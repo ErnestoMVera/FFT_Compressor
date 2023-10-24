@@ -1,5 +1,5 @@
 #define _USE_MATH_DEFINES
-#define BUF_SIZE 128
+#define BUF_SIZE 2048
 #include<iostream>
 #include<complex>
 #include<cmath>
@@ -42,8 +42,8 @@ unsigned int round_to_power2(unsigned int n) {
 	return closer;
 }
 void compression_fft(char* image_path) {
-	ifstream img_stream(image_path);
-	unsigned int i, j, size, width, height, padded_width, padded_height;
+	ifstream img_stream(image_path, ios_base::binary);
+	unsigned int i, j, size, bytes_read, width, height, padded_width, padded_height;
 	if(!img_stream.is_open()) {
 		cout << "File was not opened succesfully" << '\n' << image_path << endl;
 		return;
@@ -53,21 +53,40 @@ void compression_fft(char* image_path) {
 	// leer imagen
 	padded_width = round_to_power2(width);
 	padded_height = round_to_power2(height);
-	size = padded_width*padded_height;
+	size = width*height;
 	unsigned char img[size];
 	unsigned char buffer[BUF_SIZE];
-	for(i = 0; i < size; i += BUF_SIZE) {
-		if(img_stream.good())
-			img_stream.read((char*) &buffer, BUF_SIZE);
+	i = 0;
+	while(!img_stream.eof()) {
+		if(img_stream.good()) {
+			img_stream.read((char*) buffer, BUF_SIZE);
+			bytes_read = img_stream.gcount();
+			cout << bytes_read << endl;
+			for(j = 0; j < bytes_read; j++) {
+				img[i + j] = buffer[j];
+			}
+			i += bytes_read;
+		}
 		else {
 			cout << "Error" << '\n';
 			break;
 		}
-		for(j = 0; j < BUF_SIZE; j++) {
-			img[i + j] = buffer[j];
-		}
 	}
 	img_stream.close();
+	cout << "[["; 
+	cout << (unsigned int) img[0];
+	for(i = 1; i < size; i++) {
+		if(i % height == 0) {
+			cout << "], [";
+		}
+		if(i % height != 0) {
+			cout << ", "<< (unsigned int) img[i];
+		}
+		else {
+			cout << (unsigned int) img[i];
+		}
+	}
+	cout << "]]";
 }
 void forward_or_inverse_fft(short int forward_inverse_flag) {
 	unsigned long long int n, i; // NUMBER OF COEFFICIENTS, MUST BE AN INTEGER 2^n
