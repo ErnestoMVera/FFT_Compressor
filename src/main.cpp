@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 #define BUF_SIZE 2048
 #include<iostream>
+#include<cstring>
 #include<complex>
 #include<cmath>
 #include<unistd.h>
@@ -61,7 +62,6 @@ void compression_fft(char* image_path) {
 		if(img_stream.good()) {
 			img_stream.read((char*) buffer, BUF_SIZE);
 			bytes_read = img_stream.gcount();
-			cout << bytes_read << endl;
 			for(j = 0; j < bytes_read; j++) {
 				img[i + j] = buffer[j];
 			}
@@ -73,20 +73,72 @@ void compression_fft(char* image_path) {
 		}
 	}
 	img_stream.close();
-	cout << "[["; 
-	cout << (unsigned int) img[0];
-	for(i = 1; i < size; i++) {
-		if(i % height == 0) {
-			cout << "], [";
+	// ZERO-PAD THE IMAGE AND MAKE COEFFICIENT MATRIX
+	complex<float> coefficients[padded_width][padded_height];
+	complex<float> output[padded_width][padded_height];
+	complex<float> temp_coef[padded_width];
+	complex<float> temp_out[padded_width];
+	for(i = 0; i < padded_width; i++) {
+		if(i >= width) {
+			memset(&coefficients[i], 0, padded_height);
+			continue;
 		}
-		if(i % height != 0) {
-			cout << ", "<< (unsigned int) img[i];
-		}
-		else {
-			cout << (unsigned int) img[i];
+		for(j = 0; j < padded_height; j++) {
+			if(j >= height)
+				coefficients[i][j] = 0;
+			else
+				coefficients[i][j] = (float) img[i*height + j];
 		}
 	}
-	cout << "]]";
+	for(i = 0; i < padded_width; i++) {
+		fft(coefficients[i], padded_height, output[i]);
+	}
+	for(i = 0; i < padded_height; i++) {
+		for(j = 0; j < padded_width; j++) {
+			temp_coef[j] = output[j][i];
+		}
+		fft(temp_coef, padded_width, temp_out);
+		for(j = 0; j < padded_width; j++) {
+			output[j][i] = temp_out[j];
+		}
+	}
+	//cout << "[";
+	//for(i = 0; i < padded_width; i++) {
+	//	cout << "[";
+	//	for(j = 0; j < padded_height; j++) {
+	//		if(j != padded_height - 1)
+	//			cout << abs(output[i][j]) << ", ";
+	//		else
+	//			cout << abs(output[i][j]);
+	//	}
+	//	if(i == padded_width - 1)
+	//		cout << "]";
+	//	else
+	//		cout << "],";
+
+	//}
+	//cout << "]";
+	//cout << '\n';
+	cout << "[";
+	for(i = padded_width/2; i < padded_width; i++) {
+		if(i == padded_width - 1) i = 0;
+		if(i == padded_width/2 - 1) break;
+		cout << "[";
+		for(j = padded_height/2; j < padded_height; j++) {
+			if(j == padded_height - 1) j = 0;
+			if(j == padded_height/2 - 1) break;
+			if(j == padded_height - 1 || j == padded_height/2 - 1)
+				cout << abs(output[i][j]);
+			else
+				cout << abs(output[i][j]) << ", ";
+		}
+		if(i == padded_width - 1 || i == padded_width/2 - 1)
+			cout << "]";
+		else
+			cout << "],";
+
+	}
+	cout << "]";
 }
 void forward_or_inverse_fft(short int forward_inverse_flag) {
 	unsigned long long int n, i; // NUMBER OF COEFFICIENTS, MUST BE AN INTEGER 2^n
