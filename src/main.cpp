@@ -47,6 +47,8 @@ unsigned int round_to_power2(unsigned int n) {
 void decompression_fft(char* image_path) {
 	ifstream img_stream(image_path, ios_base::binary);
 	unsigned int i = 0, j, k, size, bytes_read, width, height;
+	unsigned int r = 0, m = 0;
+	unsigned int padded_width, padded_height;
 	if(!img_stream.is_open()) {
 		cout << "File was not opened succesfully" << '\n' << image_path << endl;
 		return;
@@ -54,15 +56,19 @@ void decompression_fft(char* image_path) {
 	img_stream.read((char*) &width, 4);
 	img_stream.read((char*) &height, 4);
 	img_stream.read((char*) &size, 4);
+	padded_width = round_to_power2(width);
+	padded_height = round_to_power2(height);
 	complex<float> coefficients[size][size];
+	complex<float> coefficients_temp[size][size];
+	complex<float> coefficients_corrected[padded_width][padded_height];
 	float temp[2*size*size];
 	unsigned char buffer[BUF_SIZE];
 	while(!img_stream.eof()) {
 		if(img_stream.good()) {
 			img_stream.read((char*) buffer, BUF_SIZE);
 			bytes_read = img_stream.gcount();
-			cout << bytes_read << '\n';
 			for(j = 0, k = 0; j < bytes_read; j += 4, k++) {
+				// esta linea convierte conjuntos de 4 bytes de unsigned char a floats de 4 bytes
 				temp[i + k] = *((float*) &buffer[j]);
 			}
 			i += bytes_read/4;
@@ -79,21 +85,44 @@ void decompression_fft(char* image_path) {
 			k += 2;
 		}
 	}
-	cout << "[[";
+	r = 0;
+	for(i = (size/2 - 1); i >= 0; i--) {
+		m = 0;
+		for(j = (size/2 - 1); j >= 0; j--) {
+			coefficients_temp[r][m] = coefficients[i][j];
+			if(j == size/2) break;
+			if(j == 0) j = size;
+			m++;
+		}
+		if(i == size/2) break;
+		if(i == 0) i = size;
+		r++;
+	}
+	cout << "test_ord = [[";
+	for(i = 0; i < size; i++) {
+		for(j = 0; j < size; j++) {
+			if(j != (size - 1))
+				cout << abs(coefficients_temp[i][j]) << ',';
+			else
+				cout << abs(coefficients_temp[i][j]);
+		}
+		if(i != size - 1)
+			cout << "],[";
+	}
+	cout << "]]";
+	cout << '\n';
+	cout << "test = [[";
 	for(i = 0; i < size; i++) {
 		for(j = 0; j < size; j++) {
 			if(j != (size - 1))
 				cout << abs(coefficients[i][j]) << ',';
 			else
 				cout << abs(coefficients[i][j]);
-
 		}
-		if(i != (size - 1))
+		if(i != size - 1)
 			cout << "],[";
-		else
-			cout << "]";
 	}
-	cout << "]";
+	cout << "]]";
 }
 void compression_fft(char* image_path) {
 	ifstream img_stream(image_path, ios_base::binary);
@@ -157,18 +186,17 @@ void compression_fft(char* image_path) {
 		}
 	}
 	unsigned int r = 0, m = 0;
-	for(i = padded_width/2; i < padded_width; i++) {
+	for(i = (padded_width/2 - 1); i >= 0; i--) {
 		m = 0;
-		if(i == padded_width - 1) i = 0;
-		if(i == padded_width/2 - 1) break;
-		for(j = padded_height/2; j < padded_height; j++) {
-			if(j == padded_height - 1) j = 0;
-			if(j == padded_height/2 - 1) break;
+		for(j = (padded_height/2 - 1); j >= 0; j--) {
 			output_aux[r][m] = output[i][j];
+			if(j == 0) j = padded_height - 1;
+			if(j == padded_height/2) break;
 			m++;
 		}
+		if(i == 0) i = padded_width - 1;
+		if(i == padded_width/2) break;
 		r++;
-
 	}
 	// recortar un cuadrado con el 10% de los coeficientes
 	float porcentaje = 0.1f;
@@ -196,6 +224,18 @@ void compression_fft(char* image_path) {
 			img_stream_output.write(reinterpret_cast<const char*>(&im), sizeof(float));
 		}
 	}
+	cout << "[[";
+	for(i = inicio_width; i < fin_width; i++) {
+		for(j = inicio_height; j < fin_height; j++) {
+			if(j != (fin_height - 1))
+				cout << abs(output_aux[i][j]) << ',';
+			else
+				cout << abs(output_aux[i][j]);
+		}
+		if(i != fin_width - 1)
+			cout << "],[";
+	}
+	cout << "]]";
 }
 void forward_or_inverse_fft(short int forward_inverse_flag) {
 	unsigned long long int n, i; // NUMBER OF COEFFICIENTS, MUST BE AN INTEGER 2^n
