@@ -30,6 +30,7 @@ int main(int argc, char** argv) {
 				break;
 			case 'd': // Decompression two dimensional FFT
 				decompression_fft(optarg);
+				break;
 			default:
 				break;
 		}
@@ -45,6 +46,8 @@ unsigned int round_to_power2(unsigned int n) {
 	return closer;
 }
 void decompression_fft(char* image_path) {
+	cout << "import numpy as np" << '\n';
+	cout << "import matplotlib.pyplot as plt" << '\n';
 	ifstream img_stream(image_path, ios_base::binary);
 	unsigned int i = 0, j, k, size, bytes_read, width, height;
 	unsigned int r = 0, m = 0;
@@ -59,8 +62,8 @@ void decompression_fft(char* image_path) {
 	padded_width = round_to_power2(width);
 	padded_height = round_to_power2(height);
 	complex<float> coefficients[size][size];
-	complex<float> coefficients_temp[size][size];
 	complex<float> coefficients_corrected[padded_width][padded_height];
+	complex<float> coefficients_temp[padded_width][padded_height];
 	float temp[2*size*size];
 	unsigned char buffer[BUF_SIZE];
 	while(!img_stream.eof()) {
@@ -78,6 +81,7 @@ void decompression_fft(char* image_path) {
 			break;
 		}
 	}
+	img_stream.close();
 	k = 0;
 	for(i = 0; i < size; i++) {
 		for(j = 0; j < size; j++) {
@@ -85,33 +89,60 @@ void decompression_fft(char* image_path) {
 			k += 2;
 		}
 	}
-	r = 0;
-	for(i = (size/2 - 1); i >= 0; i--) {
-		m = 0;
-		for(j = (size/2 - 1); j >= 0; j--) {
-			coefficients_temp[r][m] = coefficients[i][j];
-			if(j == size/2) break;
-			if(j == 0) j = size;
-			m++;
+	// ZERO PAD THE COMPRESSED IMAGE
+	unsigned int twm = padded_width/2 - size/2;
+	unsigned int twp = padded_width/2 + size/2;
+	unsigned int thm = padded_height/2 - size/2;
+	unsigned int thp = padded_height/2 + size/2;
+	for(i = 0; i < padded_width; i++) {
+		if(i < twm || i > twp) {
+			memset(&coefficients_corrected[i], 0, padded_height*sizeof(complex<float>));
+			continue;
 		}
-		if(i == size/2) break;
-		if(i == 0) i = size;
+		m = 0;
+		for(j = 0; j < padded_height; j++) {
+			if(j < thm || j > thp) {
+				coefficients_corrected[i][j] = 0;
+			}
+			else {
+				coefficients_corrected[i][j] = coefficients[r][m];
+				m++;
+			}
+		}
 		r++;
 	}
-	cout << "test_ord = [[";
-	for(i = 0; i < size; i++) {
-		for(j = 0; j < size; j++) {
-			if(j != (size - 1))
-				cout << abs(coefficients_temp[i][j]) << ',';
-			else
-				cout << abs(coefficients_temp[i][j]);
+	r = 0;
+	m = 0;
+	// INVERTION OF THE IMAGE SO THAT CAN BE DE COMPRESSED
+	for(i = (padded_width/2 - 1); i >= 0; i--) {
+		m = 0;
+		for(j = (padded_height/2 - 1); j >= 0; j--) {
+			coefficients_temp[r][m] = coefficients_corrected[i][j];
+			if(j == padded_height/2) break;
+			if(j == 0) j = padded_height;
+			m++;
 		}
-		if(i != size - 1)
-			cout << "],[";
+		if(i == padded_width/2) break;
+		if(i == 0) i = padded_width;
+		r++;
 	}
-	cout << "]]";
-	cout << '\n';
-	cout << "test = [[";
+	complex<float> temp_coef[padded_width];
+	complex<float> temp_out[padded_width];
+	complex<float> descomprimida_temp[padded_width][padded_height];
+	complex<float> descomprimida[padded_width][padded_height];
+	for(i = 0; i < padded_height; i++) {
+		for(j = 0; j < padded_width; j++) {
+			temp_coef[j] = coefficients_temp[j][i];
+		}
+		ifft(temp_coef, padded_width, temp_out);
+		for(j = 0; j < padded_width; j++) {
+			descomprimida_temp[j][i] = temp_out[j];
+		}
+	}
+	for(i = 0; i < padded_width; i++) {
+		ifft(descomprimida_temp[i], padded_height, descomprimida[i]);
+	}
+	cout << "test_ord = [[";
 	for(i = 0; i < size; i++) {
 		for(j = 0; j < size; j++) {
 			if(j != (size - 1))
@@ -123,6 +154,52 @@ void decompression_fft(char* image_path) {
 			cout << "],[";
 	}
 	cout << "]]";
+	cout << '\n';
+	cout << "test_padded = [[";
+	for(i = 0; i < padded_width; i++) {
+		for(j = 0; j < padded_height; j++) {
+			if(j != (padded_height - 1))
+				cout << abs(coefficients_corrected[i][j]) << ",";
+			else
+				cout << abs(coefficients_corrected[i][j]);
+		}
+		if(i != padded_width - 1)
+			cout << "],[";
+	}
+	cout << "]]";
+	cout << '\n';
+	cout << "test = [[";
+	for(i = 0; i < padded_width; i++) {
+		for(j = 0; j < padded_height; j++) {
+			if(j != (padded_height - 1))
+				cout << abs(coefficients_temp[i][j]) << ",";
+			else
+				cout << abs(coefficients_temp[i][j]);
+		}
+		if(i != padded_width - 1)
+			cout << "],[";
+	}
+	cout << "]]";
+	//cout << '\n';
+	//cout << "imagen = [[";
+	//for(i = 0; i < padded_width; i++) {
+	//	for(j = 0; j < padded_height; j++) {
+	//		if(j != (padded_height - 1))
+	//			cout << abs(descomprimida[i][j]) << ",";
+	//		else
+	//			cout << abs(descomprimida[i][j]);
+	//	}
+	//	if(i != padded_width - 1)
+	//		cout << "],[";
+	//}
+	//cout << "]]";
+	cout << '\n';
+	cout << "plt.imshow(test_padded, plt.cm.hot)" << '\n';
+	cout << "plt.figure()" << '\n';
+	cout << "plt.imshow(test, plt.cm.hot)" << '\n';
+	//cout << "plt.figure()" << '\n';
+	//cout << "plt.imshow(imagen, plt.cm.hot)" << '\n';
+	cout << "plt.show()";
 }
 void compression_fft(char* image_path) {
 	ifstream img_stream(image_path, ios_base::binary);
@@ -163,7 +240,7 @@ void compression_fft(char* image_path) {
 	complex<float> temp_out[padded_width];
 	for(i = 0; i < padded_width; i++) {
 		if(i >= width) {
-			memset(&coefficients[i], 0, padded_height);
+			memset(&coefficients[i], 0, padded_height*sizeof(complex<float>));
 			continue;
 		}
 		for(j = 0; j < padded_height; j++) {
@@ -200,6 +277,7 @@ void compression_fft(char* image_path) {
 	}
 	// recortar un cuadrado con el 10% de los coeficientes
 	float porcentaje = 0.1f;
+	float real, im;
 	unsigned int length = ceil(sqrt(width*height*porcentaje));
 	unsigned int inicio_width = padded_width/2 - length/2;
 	unsigned int fin_width = padded_width/2 + length/2;
@@ -218,24 +296,13 @@ void compression_fft(char* image_path) {
 	img_stream_output.write(reinterpret_cast<const char*>(&length), sizeof(length));
 	for(i = inicio_width; i < fin_width; i++) {
 		for(j = inicio_height; j < fin_height; j++) {
-			float r = output_aux[i][j].real();
-			float im = output_aux[i][j].imag();
-			img_stream_output.write(reinterpret_cast<const char*>(&r), sizeof(float));
+			real = output_aux[i][j].real();
+			im = output_aux[i][j].imag();
+			img_stream_output.write(reinterpret_cast<const char*>(&real), sizeof(float));
 			img_stream_output.write(reinterpret_cast<const char*>(&im), sizeof(float));
 		}
 	}
-	cout << "[[";
-	for(i = inicio_width; i < fin_width; i++) {
-		for(j = inicio_height; j < fin_height; j++) {
-			if(j != (fin_height - 1))
-				cout << abs(output_aux[i][j]) << ',';
-			else
-				cout << abs(output_aux[i][j]);
-		}
-		if(i != fin_width - 1)
-			cout << "],[";
-	}
-	cout << "]]";
+	img_stream_output.close();
 }
 void forward_or_inverse_fft(short int forward_inverse_flag) {
 	unsigned long long int n, i; // NUMBER OF COEFFICIENTS, MUST BE AN INTEGER 2^n
