@@ -180,25 +180,40 @@ void decompression_fft(char* image_path) {
 			cout << "],[";
 	}
 	cout << "]]";
-	//cout << '\n';
-	//cout << "imagen = [[";
-	//for(i = 0; i < padded_width; i++) {
-	//	for(j = 0; j < padded_height; j++) {
-	//		if(j != (padded_height - 1))
-	//			cout << abs(descomprimida[i][j]) << ",";
-	//		else
-	//			cout << abs(descomprimida[i][j]);
-	//	}
-	//	if(i != padded_width - 1)
-	//		cout << "],[";
-	//}
-	//cout << "]]";
+	cout << '\n';
+	cout << "imagen_c = [[";
+	for(i = 0; i < padded_width; i++) {
+		for(j = 0; j < padded_height; j++) {
+			if(j != (padded_height - 1))
+				cout << abs(descomprimida_temp[i][j]) << ",";
+			else
+				cout << abs(descomprimida_temp[i][j]);
+		}
+		if(i != padded_width - 1)
+			cout << "],[";
+	}
+	cout << "]]";
+	cout << '\n';
+	cout << "imagen = [[";
+	for(i = 0; i < padded_width; i++) {
+		for(j = 0; j < padded_height; j++) {
+			if(j != (padded_height - 1))
+				cout << abs(descomprimida[i][j]) << ",";
+			else
+				cout << abs(descomprimida[i][j]);
+		}
+		if(i != padded_width - 1)
+			cout << "],[";
+	}
+	cout << "]]";
 	cout << '\n';
 	cout << "plt.imshow(test_padded, plt.cm.hot)" << '\n';
 	cout << "plt.figure()" << '\n';
 	cout << "plt.imshow(test, plt.cm.hot)" << '\n';
-	//cout << "plt.figure()" << '\n';
-	//cout << "plt.imshow(imagen, plt.cm.hot)" << '\n';
+	cout << "plt.figure()" << '\n';
+	cout << "plt.imshow(imagen_c, plt.cm.hot)" << '\n';
+	cout << "plt.figure()" << '\n';
+	cout << "plt.imshow(imagen, plt.cm.hot)" << '\n';
 	cout << "plt.show()";
 }
 void compression_fft(char* image_path) {
