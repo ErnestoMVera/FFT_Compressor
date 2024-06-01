@@ -4,7 +4,7 @@ DIR=./src
 OBJ=main.o fft.o
 all: fft.exe
 fft.exe: $(OBJ)
-	$(CXX) -o fft fft.o main.o
+	$(CXX) $(CXXFLAGS) -o fft fft.o main.o
 main.o: $(DIR)/main.cpp
 	$(CXX) $(CXXFLAGS) -c $(DIR)/main.cpp
 fft.o: $(DIR)/fft.cpp
