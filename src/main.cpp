@@ -61,12 +61,15 @@ void decompression_fft(char* image_path) {
 	img_stream.read((char*) &size, 4);
 	padded_width = round_to_power2(width);
 	padded_height = round_to_power2(height);
-	//complex<float> coefficients[size][size];
-	complex<float> coefficients[padded_width][padded_height];
-	complex<float> coefficients_corrected[padded_width][padded_height];
-	complex<float> coefficients_temp[padded_width][padded_height];
-	float temp[2*padded_width*padded_height];
-	//float temp[2*size*size];
+	complex<float>** coefficients = new complex<float>*[padded_width];
+	complex<float>** coefficients_corrected = new complex<float>*[padded_width];
+	complex<float>** coefficients_temp = new complex<float>*[padded_width];
+	float* temp = new float[2*padded_width*padded_height];
+	for(i = 0; i < padded_width; i++) {
+		coefficients[i] = new complex<float>[padded_height]();
+		coefficients_corrected[i] = new complex<float>[padded_height]();
+		coefficients_temp[i] = new complex<float>[padded_height]();
+	}
 	unsigned char buffer[BUF_SIZE];
 	while(!img_stream.eof()) {
 		if(img_stream.good()) {
@@ -91,28 +94,31 @@ void decompression_fft(char* image_path) {
 			k += 2;
 		}
 	}
-	// ZERO PAD THE COMPRESSED IMAGE
-	//unsigned int twm = padded_width/2 - size/2;
-	//unsigned int twp = padded_width/2 + size/2;
-	//unsigned int thm = padded_height/2 - size/2;
-	//unsigned int thp = padded_height/2 + size/2;
-	//for(i = 0; i < padded_width; i++) {
-	//	if(i < twm || i > twp) {
-	//		memset(&coefficients_corrected[i], 0, padded_height*sizeof(complex<float>));
-	//		continue;
-	//	}
-	//	m = 0;
-	//	for(j = 0; j < padded_height; j++) {
-	//		if(j < thm || j > thp) {
-	//			coefficients_corrected[i][j] = 0;
-	//		}
-	//		else {
-	//			coefficients_corrected[i][j] = coefficients[r][m];
-	//			m++;
-	//		}
-	//	}
-	//	r++;
-	//}
+	delete[] temp;	
+	//ZERO PAD THE COMPRESSED IMAGE
+	unsigned int twm = padded_width/2 - size/2;
+	unsigned int twp = padded_width/2 + size/2;
+	unsigned int thm = padded_height/2 - size/2;
+	unsigned int thp = padded_height/2 + size/2;
+	for(i = 0; i < padded_width; i++) {
+		if(i < twm || i > twp) {
+			for(j = 0; j < padded_height; j++) {
+				coefficients_corrected[i][j] = 0;
+			}
+			continue;
+		}
+		m = 0;
+		for(j = 0; j < padded_height; j++) {
+			if(j < thm || j > thp) {
+				coefficients_corrected[i][j] = 0;
+			}
+			else {
+				coefficients_corrected[i][j] = coefficients[r][m];
+				m++;
+			}
+		}
+		r++;
+	}
 	r = 0;
 	m = 0;
 	// INVERTION OF THE IMAGE SO THAT CAN BE DE COMPRESSED
@@ -128,10 +134,14 @@ void decompression_fft(char* image_path) {
 		if(i == 0) i = padded_width;
 		r++;
 	}
-	complex<float> temp_coef[padded_width];
-	complex<float> temp_out[padded_width];
-	complex<float> descomprimida_temp[padded_width][padded_height];
-	complex<float> descomprimida[padded_width][padded_height];
+	complex<float>* temp_coef = new complex<float>[padded_width]();
+	complex<float>* temp_out = new complex<float>[padded_width]();
+	complex<float>** descomprimida_temp = new complex<float>*[padded_width];
+	complex<float>** descomprimida = new complex<float>*[padded_width];
+	for(i = 0; i < padded_width; i++) {
+		descomprimida_temp[i] = new complex<float>[padded_height]();
+		descomprimida[i] = new complex<float>[padded_height]();
+	}
 	for(i = 0; i < padded_height; i++) {
 		for(j = 0; j < padded_width; j++) {
 			temp_coef[j] = coefficients_temp[j][i];
@@ -144,64 +154,75 @@ void decompression_fft(char* image_path) {
 	for(i = 0; i < padded_width; i++) {
 		ifft(descomprimida_temp[i], padded_height, descomprimida[i]);
 	}
-	cout << "test_ord = [[";
-	for(i = 0; i < size; i++) {
-		for(j = 0; j < size; j++) {
-			if(j != (size - 1))
-				cout << abs(coefficients[i][j]) << ',';
-			else
-				cout << abs(coefficients[i][j]);
-		}
-		if(i != size - 1)
-			cout << "],[";
-	}
-	cout << "]]";
-	cout << '\n';
-	cout << "test_padded = [[";
-	for(i = 0; i < padded_width; i++) {
-		for(j = 0; j < padded_height; j++) {
-			if(j != (padded_height - 1))
-				cout << abs(coefficients_temp[i][j]) << ",";
-			else
-				cout << abs(coefficients_temp[i][j]);
-		}
-		if(i != padded_width - 1)
-			cout << "],[";
-	}
-	cout << "]]";
-	cout << '\n';
-	cout << "test = [[";
-	for(i = 0; i < padded_width; i++) {
-		for(j = 0; j < padded_height; j++) {
-			if(j != (padded_height - 1))
-				cout << abs(coefficients_temp[i][j]) << ",";
-			else
-				cout << abs(coefficients_temp[i][j]);
-		}
-		if(i != padded_width - 1)
-			cout << "],[";
-	}
-	cout << "]]";
-	cout << '\n';
+	//cout << "test_ord = [[";
+	//for(i = 0; i < size; i++) {
+	//	for(j = 0; j < size; j++) {
+	//		if(j != (size - 1))
+	//			cout << abs(coefficients[i][j]) << ',';
+//			else
+//				cout << abs(coefficients[i][j]);
+//		}
+//		if(i != size - 1)
+//			cout << "],[";
+//	}
+//	cout << "]]";
+//	cout << '\n';
+//	cout << "test_padded = [[";
+//	for(i = 0; i < padded_width; i++) {
+//		for(j = 0; j < padded_height; j++) {
+//			if(j != (padded_height - 1))
+//				cout << abs(coefficients_temp[i][j]) << ",";
+//			else
+//				cout << abs(coefficients_temp[i][j]);
+//		}
+//		if(i != padded_width - 1)
+//			cout << "],[";
+//	}
+//	cout << "]]";
+//	cout << '\n';
+//	cout << "test = [[";
+//	for(i = 0; i < padded_width; i++) {
+//		for(j = 0; j < padded_height; j++) {
+//			if(j != (padded_height - 1))
+//				cout << abs(coefficients_temp[i][j]) << ",";
+//			else
+//				cout << abs(coefficients_temp[i][j]);
+//		}
+//		if(i != padded_width - 1)
+//			cout << "],[";
+//	}
+//	cout << "]]";
+//	cout << '\n';
 	cout << "imagen = [[";
 	for(i = 0; i < padded_width; i++) {
 		for(j = 0; j < padded_height; j++) {
 			if(j != (padded_height - 1))
-				cout << abs(descomprimida[i][j]) << ",";
+				cout << (int) abs(descomprimida[i][j]) << ",";
 			else
-				cout << abs(descomprimida[i][j]);
+				cout << (int) abs(descomprimida[i][j]);
 		}
 		if(i != padded_width - 1)
 			cout << "],[";
 	}
 	cout << "]]";
 	cout << '\n';
-	cout << "plt.imshow(test_padded, plt.cm.hot)" << '\n';
-	cout << "plt.figure()" << '\n';
-	cout << "plt.imshow(test, plt.cm.hot)" << '\n';
-	cout << "plt.figure()" << '\n';
-	cout << "plt.imshow(imagen, plt.cm.hot)" << '\n';
-	cout << "plt.show()";
+	cout << "from PIL import Image" << endl;
+	cout << "im = Image.fromarray(np.array(imagen).astype(np.uint8))" << endl;
+	cout << "im.save(\"resultado_descompresion.png\")" << endl;
+	for(i = 0; i < padded_width; i++) {
+		delete[] coefficients[i];
+		delete[] coefficients_corrected[i];
+		delete[] coefficients_temp[i];
+		delete[] descomprimida_temp[i];
+		delete[] descomprimida[i];
+	}
+	delete[] temp_coef;
+	delete[] temp_out;
+	delete[] coefficients;
+	delete[] coefficients_corrected;
+	delete[] coefficients_temp;
+	delete[] descomprimida_temp;
+	delete[] descomprimida;
 }
 void compression_fft(char* image_path) {
 	ifstream img_stream(image_path, ios_base::binary);
@@ -217,8 +238,7 @@ void compression_fft(char* image_path) {
 	padded_height = round_to_power2(height);
 	size = width*height;
 	unsigned char buffer[BUF_SIZE];
-	unsigned char* img;
-	img = new unsigned char[size];
+	unsigned char* img = new unsigned char[size];
 	i = 0;
 	while(!img_stream.eof()) {
 		if(img_stream.good()) {
@@ -243,14 +263,15 @@ void compression_fft(char* image_path) {
 	complex<float>* temp_coef = new complex<float>[padded_width];
 	complex<float>* temp_out = new complex<float>[padded_width];
 	for(i = 0; i < padded_width; i++) {
-		coefficients[i] = new complex<float>[padded_height];
-		output[i] = new complex<float>[padded_height];
-		output_aux[i] = new complex<float>[padded_height];
+		coefficients[i] = new complex<float>[padded_height]();
+		output[i] = new complex<float>[padded_height]();
+		output_aux[i] = new complex<float>[padded_height]();
 	}
 	for(i = 0; i < padded_width; i++) {
-		memset(&output[i], 0, padded_height*sizeof(complex<float>));
 		if(i >= width) {
-			memset(&coefficients[i], 0, padded_height*sizeof(complex<float>));
+			for(j = 0; j < padded_height; j++) {
+				coefficients[i][j] = 0;
+			}
 			continue;
 		}
 		for(j = 0; j < padded_height; j++) {
@@ -261,9 +282,10 @@ void compression_fft(char* image_path) {
 		}
 	}
 	for(i = 0; i < padded_width; i++) {
-		fft(coefficients[i], padded_height, output[i]);
+		//printf("%x\n", output[i]);
+		complex<float>* t_out = output[i];
+		fft(coefficients[i], padded_height, t_out);
 	}
-	return;
 	for(i = 0; i < padded_height; i++) {
 		for(j = 0; j < padded_width; j++) {
 			temp_coef[j] = output[j][i];
@@ -324,8 +346,8 @@ void compression_fft(char* image_path) {
 	img_stream_output.close();
 	for(i = 0; i < padded_width; i++) {
 		delete[] coefficients[i];
-		delete output[i];
-		delete output_aux[i];
+		delete[] output[i];
+		delete[] output_aux[i];
 	}
 	delete[] temp_coef;
 	delete[] temp_out;
