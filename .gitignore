@@ -1,6 +1,5 @@
 *.exe
 *.o
 *.png
-*.py
 fft
 *.imgc

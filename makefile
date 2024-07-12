@@ -10,4 +10,4 @@ main.o: $(DIR)/main.cpp
 fft.o: $(DIR)/fft.cpp
 	$(CXX) $(CXXFLAGS) -c $(DIR)/fft.cpp
 clean:
-	rm -rf *.o *.exe imagen_comprimida.imgc out_d.py
+	rm -rf *.o *.exe imagen_comprimida.imgc imagen_descomprimida.img 
