@@ -64,6 +64,7 @@ void allocate_matrix(complex<float>** &matrix, unsigned int n, unsigned m) {
 void decompression_fft(char* image_path) {
 	unsigned int i = 0, j, k, size, bytes_read, width, height;
 	unsigned int r = 0, m = 0;
+	float current;
 	unsigned int padded_width, padded_height;
 	complex<float>** coefficients, **coefficients_corrected, **coefficients_temp, **descomprimida, **descomprimida_temp;
 	complex<float>* temp_coef, *temp_out;
@@ -107,49 +108,32 @@ void decompression_fft(char* image_path) {
 		}
 	}
 	delete[] temp;
-	r = 0;
-	m = 0;
-	allocate_matrix(coefficients_temp, padded_height, padded_width);
-	// INVERTION OF THE IMAGE SO THAT CAN BE DE COMPRESSED
-	for(i = (padded_height/2 - 1); i >= 0; i--) {
-		m = 0;
-		for(j = (padded_width/2 - 1); j >= 0; j--) {
-			coefficients_temp[r][m] = coefficients[i][j];
-			if(j == padded_width/2) break;
-			if(j == 0) j = padded_width;
-			m++;
-		}
-		if(i == padded_height/2) break;
-		if(i == 0) i = padded_height;
-		r++;
-	}
-	free_matrix(coefficients, padded_height);
 	temp_coef = new complex<float>[padded_height]();
 	temp_out = new complex<float>[padded_height]();
 	allocate_matrix(descomprimida_temp, padded_height, padded_width);
 	for(i = 0; i < padded_width; i++) {
 		for(j = 0; j < padded_height; j++) {
-			temp_coef[j] = coefficients_temp[j][i];
+			temp_coef[j] = coefficients[j][i];
 		}
 		ifft(temp_coef, padded_height, temp_out);
 		for(j = 0; j < padded_height; j++) {
 			descomprimida_temp[j][i] = temp_out[j];
 		}
 	}
+	free_matrix(coefficients, padded_height);
+	delete[] temp_coef;
+	delete[] temp_out;
 	allocate_matrix(descomprimida, padded_height, padded_width);
 	for(i = 0; i < padded_height; i++) {
 		ifft(descomprimida_temp[i], padded_width, descomprimida[i]);
 	}
 	free_matrix(descomprimida_temp, padded_height);
-	delete[] temp_coef;
-	delete[] temp_out;
 	char decompressed_image_path[] = "imagen_descomprimida.img";
 	ofstream img_stream_output(decompressed_image_path, ios_base::binary);
 	if(!img_stream_output.is_open()) {
 		cout << "File was not created succesfully" << decompressed_image_path << '\n';
 		return;
 	}
-	unsigned int current;
 	// lo primero que va ir va a ser el tamanio de la imagen original
 	img_stream_output.write(reinterpret_cast<const char*>(&width), sizeof(width));
 	img_stream_output.write(reinterpret_cast<const char*>(&height), sizeof(height));
@@ -157,8 +141,8 @@ void decompression_fft(char* image_path) {
 	//img_stream_output.write(reinterpret_cast<const char*>(&length), sizeof(length));
 	for(i = 0; i < padded_height; i++) {
 		for(j = 0; j < padded_width; j++) {
-			current = ceil(abs(descomprimida[i][j]));
-			img_stream_output.write(reinterpret_cast<const char*>(&current), sizeof(unsigned int));
+			current = abs(descomprimida[i][j]);
+			img_stream_output.write(reinterpret_cast<const char*>(&current), sizeof(float));
 		}
 	}
 	free_matrix(descomprimida, padded_height);
@@ -167,7 +151,7 @@ void compression_fft(char* image_path) {
 	unsigned char buffer[BUF_SIZE];
 	unsigned char* img;
 	unsigned int i, j, size, bytes_read, width, height, padded_width, padded_height;
-	complex<float> **coefficients, **output, **output_aux;
+	complex<float> **coefficients, **output;
 	complex<float> *temp_coef, *temp_out;
 	// recortar un cuadrado con el 10% de los coeficientes
 	float porcentaje = 0.1f;
@@ -244,21 +228,6 @@ void compression_fft(char* image_path) {
 	}
 	delete[] temp_coef;
 	delete[] temp_out;
-	unsigned int r = 0, m = 0;
-	allocate_matrix(output_aux, padded_height, padded_width);
-	for(i = (padded_height/2 - 1); i >= 0; i--) {
-		m = 0;
-		for(j = (padded_width/2 - 1); j >= 0; j--) {
-			output_aux[r][m] = output[i][j];
-			if(j == 0) j = padded_width- 1;
-			if(j == padded_width/2) break;
-			m++;
-		}
-		if(i == 0) i = padded_height- 1;
-		if(i == padded_height/2) break;
-		r++;
-	}
-	free_matrix(output, padded_height);
 	char compressed_image_path[] = "imagen_comprimida.imgc";
 	ofstream img_stream_output(compressed_image_path, ofstream::binary);
 	if(!img_stream_output.is_open()) {
@@ -273,14 +242,15 @@ void compression_fft(char* image_path) {
 	img_stream_output.write(reinterpret_cast<const char*>(&padded_height), sizeof(padded_height));
 	for(i = 0; i < padded_height; i++) {
 		for(j = 0; j < padded_width; j++) {
-			real = output_aux[i][j].real();
-			im = output_aux[i][j].imag();
+			real = output[i][j].real();
+			im = output[i][j].imag();
 			img_stream_output.write(reinterpret_cast<const char*>(&real), sizeof(float));
 			img_stream_output.write(reinterpret_cast<const char*>(&im), sizeof(float));
 		}
 	}
 	img_stream_output.close();
-	free_matrix(output_aux, padded_height);
+	free_matrix(output, padded_height);
+	//free_matrix(output_aux, padded_height);
 }
 void forward_or_inverse_fft(short int forward_inverse_flag) {
 	unsigned long long int n, i; // NUMBER OF COEFFICIENTS, MUST BE AN INTEGER 2^n

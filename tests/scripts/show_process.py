@@ -15,7 +15,7 @@ for i in range(height):
     temp = []
     for j in range(width):
         d = imgfile.read(4)
-        a = int.from_bytes(d, "little")
+        a = struct.unpack('f', d)[0]
         temp.append(a)
     image.append(temp)
 imgfile.close()
