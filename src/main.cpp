@@ -63,11 +63,9 @@ void allocate_matrix(complex<float>** &matrix, unsigned int n, unsigned m) {
 }
 void decompression_fft(char* image_path) {
 	unsigned int i = 0, j, k, size, bytes_read, width, height;
-	unsigned int r = 0, m = 0;
 	float current;
 	unsigned int padded_width, padded_height;
-	complex<float>** coefficients, **coefficients_corrected, **coefficients_temp, **descomprimida, **descomprimida_temp;
-	complex<float>* temp_coef, *temp_out;
+	complex<float>** coefficients, **descomprimida;
 	float* temp;
 	unsigned char buffer[BUF_SIZE];
 	ifstream img_stream(image_path, ios_base::binary);
@@ -108,26 +106,9 @@ void decompression_fft(char* image_path) {
 		}
 	}
 	delete[] temp;
-	temp_coef = new complex<float>[padded_height]();
-	temp_out = new complex<float>[padded_height]();
-	allocate_matrix(descomprimida_temp, padded_height, padded_width);
-	for(i = 0; i < padded_width; i++) {
-		for(j = 0; j < padded_height; j++) {
-			temp_coef[j] = coefficients[j][i];
-		}
-		ifft(temp_coef, padded_height, temp_out);
-		for(j = 0; j < padded_height; j++) {
-			descomprimida_temp[j][i] = temp_out[j];
-		}
-	}
-	free_matrix(coefficients, padded_height);
-	delete[] temp_coef;
-	delete[] temp_out;
 	allocate_matrix(descomprimida, padded_height, padded_width);
-	for(i = 0; i < padded_height; i++) {
-		ifft(descomprimida_temp[i], padded_width, descomprimida[i]);
-	}
-	free_matrix(descomprimida_temp, padded_height);
+	ifft2(coefficients, padded_height, padded_width, descomprimida);
+	free_matrix(coefficients, padded_height);
 	char decompressed_image_path[] = "imagen_descomprimida.img";
 	ofstream img_stream_output(decompressed_image_path, ios_base::binary);
 	if(!img_stream_output.is_open()) {
@@ -152,7 +133,6 @@ void compression_fft(char* image_path) {
 	unsigned char* img;
 	unsigned int i, j, size, bytes_read, width, height, padded_width, padded_height;
 	complex<float> **coefficients, **output;
-	complex<float> *temp_coef, *temp_out;
 	// recortar un cuadrado con el 10% de los coeficientes
 	float porcentaje = 0.1f;
 	float real, im;
@@ -210,24 +190,8 @@ void compression_fft(char* image_path) {
 	}
 	delete[] img;
 	allocate_matrix(output, padded_height, padded_width);
-	for(i = 0; i < padded_height; i++) {
-		complex<float>* t_out = output[i];
-		fft(coefficients[i], padded_width, t_out);
-	}
+	fft2(coefficients, padded_height, padded_width, output);
 	free_matrix(coefficients, padded_height);
-	temp_coef = new complex<float>[padded_height];
-	temp_out = new complex<float>[padded_height];
-	for(i = 0; i < padded_width; i++) {
-		for(j = 0; j < padded_height; j++) {
-			temp_coef[j] = output[j][i];
-		}
-		fft(temp_coef, padded_height, temp_out);
-		for(j = 0; j < padded_height; j++) {
-			output[j][i] = temp_out[j];
-		}
-	}
-	delete[] temp_coef;
-	delete[] temp_out;
 	char compressed_image_path[] = "imagen_comprimida.imgc";
 	ofstream img_stream_output(compressed_image_path, ofstream::binary);
 	if(!img_stream_output.is_open()) {
@@ -250,7 +214,6 @@ void compression_fft(char* image_path) {
 	}
 	img_stream_output.close();
 	free_matrix(output, padded_height);
-	//free_matrix(output_aux, padded_height);
 }
 void forward_or_inverse_fft(short int forward_inverse_flag) {
 	unsigned long long int n, i; // NUMBER OF COEFFICIENTS, MUST BE AN INTEGER 2^n

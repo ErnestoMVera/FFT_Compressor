@@ -81,3 +81,43 @@ void fft_r(std::complex<float>* coefficients, unsigned long long int n, unsigned
 	delete[] out_impar;
 	return;
 }
+void fft2(std::complex<float>** coefficients, unsigned long long int n, unsigned long long int m, std::complex<float>** out) {
+	unsigned long long int i, j;
+	std::complex<float> *temp_coef, *temp_out;
+	temp_coef = new std::complex<float>[n];
+	temp_out = new std::complex<float>[n];
+	for(i = 0; i < n; i++) {
+		fft(coefficients[i], m, out[i]);
+	}
+	for(i = 0; i < m; i++) {
+		for(j = 0; j < n; j++) {
+			temp_coef[j] = out[j][i];
+		}
+		fft(temp_coef, n, temp_out);
+		for(j = 0; j < n; j++) {
+			out[j][i] = temp_out[j];
+		}
+	}
+	delete[] temp_coef;
+	delete[] temp_out;
+}
+void ifft2(std::complex<float>** coefficients, unsigned long long int n, unsigned long long int m, std::complex<float>** out) {
+	unsigned long long int i, j;
+	std::complex<float> *temp_coef, *temp_out;
+	temp_coef = new std::complex<float>[n];
+	temp_out = new std::complex<float>[n];
+	for(i = 0; i < n; i++) {
+		ifft(coefficients[i], m, out[i]);
+	}
+	for(i = 0; i < m; i++) {
+		for(j = 0; j < n; j++) {
+			temp_coef[j] = out[j][i];
+		}
+		ifft(temp_coef, n, temp_out);
+		for(j = 0; j < n; j++) {
+			out[j][i] = temp_out[j];
+		}
+	}
+	delete[] temp_coef;
+	delete[] temp_out;
+}
