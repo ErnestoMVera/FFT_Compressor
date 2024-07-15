@@ -54,7 +54,7 @@ or
 ./fft -i
 ```
 The next steps is input the size of the signal (it must be a power of two) and the a pair of complex coefficcients which form the input signal.
-For example an eight coefficients rectangular signal:
+For example an eight coefficient rectangular signal:
 ```
 8
 1 0
