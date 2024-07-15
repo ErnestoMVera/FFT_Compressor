@@ -96,11 +96,11 @@ void decompression_fft(char* image_path) {
 		img_stream.read((char*) buffer, BUF_SIZE);
 		bytes_read = img_stream.gcount();
 		for(j = 0; j < bytes_read; j += 4) {
-			// esta linea convierte conjuntos de 4 bytes de unsigned char a floats de 4 bytes
 			if(k % 3 == 0) {
 				indices[i] = *((unsigned int*) &buffer[j]);
 			}
 			else if(k % 3 == 1) {
+				// esta linea convierte conjuntos de 4 bytes de unsigned char a floats de 4 bytes
 				real[i] = *((float*) &buffer[j]);
 			}
 			else if(k % 3 == 2) {
@@ -136,11 +136,9 @@ void decompression_fft(char* image_path) {
 		cout << "File was not created succesfully" << decompressed_image_path << '\n';
 		return;
 	}
-	// lo primero que va ir va a ser el tamanio de la imagen original
+	// original image width x height
 	img_stream_output.write(reinterpret_cast<const char*>(&width), sizeof(width));
 	img_stream_output.write(reinterpret_cast<const char*>(&height), sizeof(height));
-	// despues el tamanio de la imagen comprimida, siempre va a ser un cuadrado
-	//img_stream_output.write(reinterpret_cast<const char*>(&length), sizeof(length));
 	for(i = 0; i < padded_height; i++) {
 		if(i >= height) break;
 		for(j = 0; j < padded_width; j++) {
@@ -167,7 +165,7 @@ void compression_fft(char* image_path, float percentage) {
 	img_stream.read((char*) &height, 4);
 	size = width*height;
 	img = new unsigned char[size];
-	// leer imagen
+	// read image
 	padded_width = round_to_power2(width);
 	padded_height = round_to_power2(height);
 	i = 0;
@@ -223,6 +221,7 @@ void compression_fft(char* image_path, float percentage) {
 			k++;	
 		}
 	}
+	// choose threshold based on the top n% coefficients with most energy
 	sort(ordered, ordered + padded_height*padded_height);
 	index = (unsigned int) ((padded_width*padded_height - 1)*(1 - percentage));
 	threshold = ordered[index];
