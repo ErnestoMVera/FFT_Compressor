@@ -16,7 +16,25 @@ To compress the image use the following command.
 ```bash
 ./fft -c generated_image.img
 ```
-The command will generate the file with the compressed file (compressed\_image.imgc).
+The command will generate the file with the compressed image (compressed\_image.imgc).
+You can also can choose the percentage of coefficients to keep during the compression stage with the -p option.
+```bash
+# This will keep 1% of the FFT Coefficients in the compressed image
+./fft -p 1 -c generated_image.img
+```
+The default percentage is 10% if not specified.
+### Image decompression.
+```bash
+./fft -d compressed_image.img
+```
+The command will generate the file with the decompressed image (decompressed\_image.imgc) in the same format as the input image.
+### show images
+To show either the original image or the decompressed image a python script is included.
+```bash
+./tests/scripts/show_image.py image.img
+```
+### Decompression example
+![Compression of Lena image keeping 10% of the Fourier coefficients](images/compression_example.png)
 ### FFT on regular signals.
 To use the program to perform the FFT or the iFFT operations, use the program with the -f (forward FFT) and -i (inverse FFT) arguments.
 The input to these modes is via the standard input.
