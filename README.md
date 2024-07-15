@@ -12,7 +12,7 @@ The package comes with a python script which converts images to the format the a
 ```bash
 ./tests/scripts/generate_raw.py input_image.jpg generated_image.img
 ```
-To compress the image use the following command.
+To compress the image use the following command:
 ```bash
 ./fft -c generated_image.img
 ```
@@ -28,13 +28,21 @@ The default percentage is 10% if not specified.
 ./fft -d compressed_image.img
 ```
 The command will generate the file with the decompressed image (decompressed\_image.imgc) in the same format as the input image.
-### show images
+### Show images
 To show either the original image or the decompressed image a python script is included.
 ```bash
 ./tests/scripts/show_image.py image.img
 ```
 ### Decompression example
-![Compression of Lena image keeping 10% of the Fourier coefficients](images/compression_example.png)
+![Compression of Lena image](images/compression_example.png)
+Compression of an image keeping 10% of the Fourier coefficients
+### Compression/Decompression test script
+The package includes a test scripts which does the complete process of compressing and decompressing the image as well as showing the before and after the compression images next to each other.
+To run it use:
+```bash
+# percentage is an optional argument, default is 10%
+./tests/compression_test.sh image.img [percentage]
+```
 ### FFT on regular signals.
 To use the program to perform the FFT or the iFFT operations, use the program with the -f (forward FFT) and -i (inverse FFT) arguments.
 The input to these modes is via the standard input.
