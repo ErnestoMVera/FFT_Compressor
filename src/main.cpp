@@ -130,7 +130,7 @@ void decompression_fft(char* image_path) {
 	allocate_matrix(descomprimida, padded_height, padded_width);
 	ifft2(coefficients, padded_height, padded_width, descomprimida);
 	free_matrix(coefficients, padded_height);
-	char decompressed_image_path[] = "imagen_descomprimida.img";
+	char decompressed_image_path[] = "decompressed_image.img";
 	ofstream img_stream_output(decompressed_image_path, ios_base::binary);
 	if(!img_stream_output.is_open()) {
 		cout << "File was not created succesfully" << decompressed_image_path << '\n';
@@ -226,7 +226,7 @@ void compression_fft(char* image_path, float percentage) {
 	index = (unsigned int) ((padded_width*padded_height - 1)*(1 - percentage));
 	threshold = ordered[index];
 	delete[] ordered;
-	char compressed_image_path[] = "imagen_comprimida.imgc";
+	char compressed_image_path[] = "compressed_image.imgc";
 	ofstream img_stream_output(compressed_image_path, ofstream::binary);
 	if(!img_stream_output.is_open()) {
 		cout << "File was not created succesfully" << compressed_image_path << '\n';
