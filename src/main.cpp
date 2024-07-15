@@ -69,7 +69,7 @@ void allocate_matrix(complex<float>** &matrix, unsigned int n, unsigned m) {
 void decompression_fft(char* image_path) {
 	unsigned int i, j, k, size, bytes_read, width, height;
 	unsigned int *indices;
-	float current;
+	unsigned char current;
 	unsigned int padded_width, padded_height;
 	complex<float>** coefficients, **descomprimida;
 	float* real, *im;
@@ -142,9 +142,11 @@ void decompression_fft(char* image_path) {
 	// despues el tamanio de la imagen comprimida, siempre va a ser un cuadrado
 	//img_stream_output.write(reinterpret_cast<const char*>(&length), sizeof(length));
 	for(i = 0; i < padded_height; i++) {
+		if(i >= height) break;
 		for(j = 0; j < padded_width; j++) {
-			current = abs(descomprimida[i][j]);
-			img_stream_output.write(reinterpret_cast<const char*>(&current), sizeof(float));
+			if(j >= width) break;
+			current = (unsigned int) abs(descomprimida[i][j]);
+			img_stream_output.write(reinterpret_cast<const char*>(&current), sizeof(unsigned char));
 		}
 	}
 	free_matrix(descomprimida, padded_height);
